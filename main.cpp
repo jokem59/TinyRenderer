@@ -13,15 +13,26 @@ struct Point {
 		Point(int x, int y) : x{x}, y{y} {}
 };
 
-void linearInterpolation_v1(TGAImage& framebuffer, const TGAColor& color, const Point& a, const Point& b) {
-	  int x = 0;
-	  int y = 0;
-		for (int t = 0; t <= 100; t++) {
-			  x = a.x + t * (b.x - a.x) / 100;
-			  y = a.y + t * (b.y - a.y) / 100;
-				framebuffer.set(x, y, color);
-		}
-		return;
+void linearInterpolation_v3(TGAImage& framebuffer, const TGAColor& color, const Point& a, const Point& b) {
+    bool steep = abs(a.x - b.x) < abs(a.y - b.y);
+    if (steep) {
+        int start_y = std::min(a.y, b.y);
+        int end_y = std::max(a.y, b.y);
+        for (int y = start_y; y <= end_y; y++) {
+	        float t = (y - a.y) / static_cast<float>(b.y - a.y);
+		    int x = a.x + t * (b.x - a.x);
+  	        framebuffer.set(x, y, color);
+        }
+    } else {
+        int start_x = std::min(a.x, b.x);
+        int end_x = std::max(a.x, b.x);
+        for (int x = start_x; x <= end_x; x++) {
+	        float t = (x - a.x) / static_cast<float>(b.x - a.x);
+		    int y = a.y + t * (b.y - a.y);
+  	        framebuffer.set(x, y, color);
+        }
+    }
+    return;
 }
 
 int main(int argc, char** argv) {
@@ -37,9 +48,9 @@ int main(int argc, char** argv) {
     framebuffer.set(b.x, b.y, white);
     framebuffer.set(c.x, c.y, white);
 
-		linearInterpolation_v1(framebuffer, red, a, b);
-		linearInterpolation_v1(framebuffer, blue, b, c);
-		linearInterpolation_v1(framebuffer, yellow, c, a);
+		linearInterpolation_v3(framebuffer, red, a, b);
+		linearInterpolation_v3(framebuffer, blue, b, c);
+		linearInterpolation_v3(framebuffer, yellow, c, a);
 
     framebuffer.write_tga_file("framebuffer.tga");
     return 0;
